@@ -1,0 +1,8 @@
+{
+    "python.analysis.typeCheckingMode": "basic",
+    "editor.quickSuggestions": {
+        "strings": "on"
+    },
+    "editor.tabCompletion": "on",
+    "python.analysis.autoImportCompletions": true
+}
