@@ -1,0 +1,7 @@
+{
+    "reportArgumentType": "none",
+    "reportAssignmentType": "none",
+    "reportUnhashable": "none",
+    "reportReturnType": "none",
+    "reportOptionalMemberAccess": "none"
+  }

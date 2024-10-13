@@ -1,32 +1,31 @@
+
 from __future__ import annotations
 
-from enum import Enum, auto
 from dataclasses import dataclass, field
 from dataclasses import fields as list_fields
 from datetime import datetime
+from enum import Enum
 import logging
-import re
-from typing import Any
 
 from bson import ObjectId
 from pymongo.collection import Collection
 
-import db
+from utils import only
+from typing import Any, Type, TypeVar
 
-logging.getLogger().setLevel(logging.ERROR)
+T = TypeVar('T', bound='Model')
 
 
 class NonAdminRoles(str, Enum):
-    neutralizer = auto()
-    reviewer = auto()
-    hybrid = auto()
+    neutralizer = "neutralizer"
+    reviewer = "reviewer"
+    hybrid = "hybrid"
     
 class Roles(str, Enum):
-    admin = auto()
-    neutralizer = auto()
-    reviewer = auto()
-    hybrid = auto()
-    
+    admin = "admin"
+    neutralizer = "neutralizer"
+    reviewer = "reviewer"
+    hybrid = "hybrid"
 
 @dataclass
 class _Custom:
@@ -90,26 +89,24 @@ class Model(_Custom):
         except Exception as e:
             logging.error('Update failed', exc_info=e)
             return False
-
-@dataclass(kw_only=True)
-class User(Model):
-
-    coll: Collection = db.collections[db.USERS]
-
-    active: bool
-    alias: str = ''
-    created_at: datetime
-    last_updated: datetime = None
-    locale: str = 'en'
-    role: Roles
-
-@dataclass(kw_only=True)
-class Segment(Model):
-
-    coll: Collection = db.collections[db.SEGMENTS]
-
-    active: bool
-    created_at: datetime
-    lang: str
-    last_updated: datetime = None
-    source: str
+        
+    @classmethod
+    def from_record(cls: Type[T], record:dict, ignore_extra: bool = True) -> T:
+        """Exists to allow control of extra arguments from the DB"""
+        if ignore_extra:
+            record = only(record, keys=cls.list_fields())
+        return cls(**record)
+    
+    def refresh(self) -> Model:
+        return self.from_id(self.oid)
+    
+    @classmethod
+    def _from(cls: Type[T], key: str, value: Any) -> T|None:
+        obj = cls.coll.find_one({key: value})
+        if not obj:
+            return None
+        return cls.from_record(obj, ignore_extra=True)
+    
+    @classmethod
+    def from_id(cls: Type[T], id: ObjectId|str) -> T:
+        return cls._from(key='_id', value=ObjectId(id))
