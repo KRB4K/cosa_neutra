@@ -98,7 +98,7 @@ class Model(_Custom):
         return cls(**record)
     
     def refresh(self) -> Model:
-        return self.from_id(self.oid)
+        return self.from_oid(self.oid)
     
     @classmethod
     def _from(cls: Type[T], key: str, value: Any) -> T|None:
@@ -108,5 +108,7 @@ class Model(_Custom):
         return cls.from_record(obj, ignore_extra=True)
     
     @classmethod
-    def from_id(cls: Type[T], id: ObjectId|str) -> T:
+    def from_oid(cls: Type[T], id: ObjectId|str) -> T:
         return cls._from(key='_id', value=ObjectId(id))
+    
+    

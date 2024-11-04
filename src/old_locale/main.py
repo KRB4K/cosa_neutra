@@ -2,6 +2,10 @@ from enum import Enum, auto
 
 
 class Token(Enum):
+
+    PLAY_BUTTON = auto()
+
+
     TODAYS_MWE = auto()
     SUBMIT = auto()
     REVIEW = auto()
