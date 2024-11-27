@@ -2,17 +2,32 @@ from __future__ import annotations
 
 from enum import Enum, auto
 
-from models.users import User
+import telegram
 
 DEFAULT = 'en'
 
-def translate(token:Token, user:User):
-    lang = user.language if user else DEFAULT
+def translate(token:Token, update:telegram.Update):
+    lang = update.effective_user.language_code
     lang = lang if lang in TRANSLATIONS else DEFAULT
-    return TRANSLATIONS[lang][token]
+    try:
+        translation = TRANSLATIONS[lang][token]
+    except KeyError:
+        translation = TRANSLATIONS[DEFAULT][token]
+    return translation
 
 
 class Token(Enum):
+
+    YES = auto()
+    NO = auto()
+
+    # Menu
+    WELCOME = auto()
+
+    # Languages
+    FRENCH = auto()
+    ENGLISH = auto()
+
     # Buttons
     PLAY_BUTTON = auto()
     HELP_BUTTON = auto()
@@ -36,6 +51,7 @@ class Token(Enum):
     DEFAULT_GREETING = auto()
     DEFAULT_UNKNOWN = auto()
     ASK_LANGUAGE = auto()
+    ASK_IF_IN_TEAM = auto(),
     ASK_TEAM = auto()
     ASK_ROLE = auto()
     FINISH_ONBOARDING = auto()
@@ -45,6 +61,13 @@ class Token(Enum):
 
 TRANSLATIONS = {
     'en': {
+        Token.YES: 'Yes',
+        Token.NO: 'No',
+
+        Token.FRENCH: 'French',
+        Token.ENGLISH: 'English',
+
+        Token.WELCOME: 'Welcome!',
         Token.PLAY_BUTTON: 'Play',
         Token.HELP_BUTTON: 'Help',
         Token.END_GAME_BUTTON: 'End Game',
@@ -63,13 +86,21 @@ TRANSLATIONS = {
         Token.DEFAULT_GREETING: "Hi there! How can I assist you today?",
         Token.DEFAULT_UNKNOWN: "I'm not sure how to respond to that. Try using /help.",
         Token.ASK_LANGUAGE: "Hello! I need to ask you a few questions to get started. What is your working language?",
-        Token.ASK_TEAM: "Do you have a team? If so, which one?",
+        Token.ASK_IF_IN_TEAM: "Are you in a team?",
+        Token.ASK_TEAM: "What is  your team?",
         Token.ASK_ROLE: "What is your role?",
         Token.FINISH_ONBOARDING: "Thank you! You are all set. Use /play to start playing!",
         Token.START_EXISTING_USER: "Welcome back! Use /play to start playing!",
         Token.START_NEW_USER: "Welcome to the game, let's start with a few questions!"
     },
     'fr': {
+        Token.YES: 'Oui',
+        Token.NO: 'Non',
+
+        Token.FRENCH: 'Français',
+        Token.ENGLISH: 'Anglais',
+
+        Token.WELCOME: 'Bienvenue !',
         Token.PLAY_BUTTON: 'Jouer',
         Token.HELP_BUTTON: 'Aide',
         Token.END_GAME_BUTTON: 'Terminer le jeu',
@@ -88,7 +119,8 @@ TRANSLATIONS = {
         Token.DEFAULT_GREETING: "Bonjour ! Comment puis-je vous aider aujourd'hui ?",
         Token.DEFAULT_UNKNOWN: "Je ne sais pas comment répondre à cela. Essayez d'utiliser /help.",
         Token.ASK_LANGUAGE: "Bonjour ! Je dois vous poser quelques questions pour commencer. Quelle est votre langue de travail ?",
-        Token.ASK_TEAM: "Avez-vous une équipe ? Si oui, laquelle ?",
+        Token.ASK_IF_IN_TEAM: "Es-tu dans une équipe ?",
+        Token.ASK_TEAM: "Quelle est ton équipe ?",
         Token.ASK_ROLE: "Quel est votre rôle ?",
         Token.FINISH_ONBOARDING: "Merci ! Vous êtes prêt. Utilisez /play pour commencer à jouer !",
         Token.START_EXISTING_USER: "Bon retour ! Utilisez /play pour commencer à jouer !",
