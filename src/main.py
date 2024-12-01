@@ -18,49 +18,8 @@ from bot.handlers.main import unknown_command_handler, default_handler
 
 import api.models as models
 
-dotenv.load_dotenv()
-BOT_TOKEN: str = os.getenv('telegram_bot_token')
-GAME_NAME: str = os.getenv('game_name')
+from settings import BOT_TOKEN, GAME_NAME
 assert all((BOT_TOKEN, GAME_NAME)), 'Envrionment variables missing'
-
-TELEGRAM_API = 'https://api.telegram.org'
-
-user_states = {id:{} for id in models.get_existing_users_ids()}
-
-
-async def get(url, *args, **kwargs):
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, *args, **kwargs)
-        return response.json()
-    
-async def post(url: str, data: dict, *args, **kwargs):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, json=data, *args, **kwargs)
-        return response.json()  
-
-
-
-async def send_notification(chat: Chat, message:str):
-    url = TELEGRAM_API + f'/bot{BOT_TOKEN}/sendMessage'
-    # message = urllib.parse.quote_plus(message)
-    params = {
-        'chat_id':chat.id,
-    }
-    body = {
-        'text':message
-    }
-    response = await post(url, body, params=params)
-    return response
-
-
-from telegram.ext import CallbackQueryHandler
-
-async def cb_QueryHandler(update: Update, context: CallbackContext):
-    print('in test_CallbackQueryHandler')
-    print(update.callback_query.data)
-    await update.callback_query.answer()
-    print('ooooo')
-    await update.callback_query.edit_message_text(text=f"Selected option: {update.callback_query.data}")
 
     # await update.callback_query.edit_message_text(text="Selected option: {}".format(update.callback_query.data))
 
@@ -72,6 +31,5 @@ if __name__ == '__main__':
     
     application.add_handler(MessageHandler(filters.COMMAND, unknown_command_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, default_handler))
-    application.add_handler(CallbackQueryHandler(cb_QueryHandler))    
     
     application.run_polling()
