@@ -53,11 +53,25 @@ async def send_notification(chat: Chat, message:str):
     return response
 
 
+from telegram.ext import CallbackQueryHandler
+
+async def cb_QueryHandler(update: Update, context: CallbackContext):
+    print('in test_CallbackQueryHandler')
+    print(update.callback_query.data)
+    await update.callback_query.answer()
+    print('ooooo')
+    await update.callback_query.edit_message_text(text=f"Selected option: {update.callback_query.data}")
+
+    # await update.callback_query.edit_message_text(text="Selected option: {}".format(update.callback_query.data))
+
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
+
     
     application.add_handler(onboarding_handler)
+    
     application.add_handler(MessageHandler(filters.COMMAND, unknown_command_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, default_handler))
+    application.add_handler(CallbackQueryHandler(cb_QueryHandler))    
     
     application.run_polling()

@@ -19,7 +19,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
     chat, message, user = get_entities(update)
     
-    await _reset()
+    # await _reset()
 
     active_user = await load_active_user(update, context)
     if not active_user:
