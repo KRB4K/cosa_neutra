@@ -10,7 +10,7 @@ import api.models as models
 import api.enums
 import db
 import keyboards
-from states import STATES
+from states import State, set_state, get_state
 from static import WORKING_LANGUAGES, DEFAULT_GAME
 
 from locales import translate, Token
@@ -19,13 +19,18 @@ async def ask_language(update: Update, context: CallbackContext) -> int:
     """Handler to ask for the user's working language."""
 
     reply = translate(Token.ASK_LANGUAGE, update)
+    return await update.message.reply_text(reply)
+    # return await update.message.reply_text("Please choose:", reply_markup=keyboards.working_languages(update))
+    # await context.bot.send_message(
+    #     chat_id=update.effective_chat.id,
+    #     text=reply,
+    #     reply_markup = keyboards.working_languages(update)
+    # )
+    # set_state(context, State.LANGUAGE_IS_ASKED)
+
+async def set_language(update: Update, context: CallbackContext) -> int:
+    ...
     
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=reply,
-        reply_markup = keyboards.working_languages(update)
-    )
-    return STATES.ASK_IF_IN_TEAM
 
 async def ask_if_in_team(update: Update, context: CallbackContext) -> int:
     """Handler to ask if the user has a team."""
@@ -41,7 +46,7 @@ async def ask_if_in_team(update: Update, context: CallbackContext) -> int:
         text=reply,
         reply_markup = keyboards.yes_or_no(update)
     )
-    return STATES.ASK_TEAM
+    # return STATES.ASK_TEAM
 
 async def ask_team(update: Update, context: CallbackContext) -> int:
     """Handler to ask if the user has a team."""
@@ -54,7 +59,7 @@ async def ask_team(update: Update, context: CallbackContext) -> int:
             text=translate(Token.ASK_TEAM, update),
             reply_markup = await keyboards.teams(update)
         )
-        return STATES.REGISTER_IN_TEAM
+        # return STATES.REGISTER_IN_TEAM
 
     else:
         return await ask_role(update, context)
@@ -78,7 +83,7 @@ async def ask_role(update: Update, context: CallbackContext) -> int:
         text=translate(Token.ASK_ROLE, update),
         reply_markup=keyboards.roles(update)
     )
-    return STATES.FINISH_ONBOARDING
+    # return STATES.FINISH_ONBOARDING
 
 async def finish_onboarding(update: Update, context: CallbackContext) -> int:
     """Handler to finish onboarding process."""

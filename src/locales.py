@@ -6,9 +6,13 @@ import telegram
 
 DEFAULT = 'en'
 
-def translate(token:Token, update:telegram.Update):
+def get_user_language(update:telegram.Update):
     lang = update.effective_user.language_code
     lang = lang if lang in TRANSLATIONS else DEFAULT
+    return lang
+
+def translate(token:Token, update:telegram.Update):
+    lang = get_user_language(update)
     try:
         translation = TRANSLATIONS[lang][token]
     except KeyError:
@@ -57,6 +61,8 @@ class Token(Enum):
     FINISH_ONBOARDING = auto()
     START_EXISTING_USER = auto()
     START_NEW_USER = auto()
+
+
 
 
 TRANSLATIONS = {

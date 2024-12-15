@@ -10,6 +10,5 @@ import api.models as models
 import api.enums
 import db
 import keyboards
-from states import STATES
 from static import WORKING_LANGUAGES, DEFAULT_GAME
 
