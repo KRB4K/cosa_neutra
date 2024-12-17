@@ -1,23 +1,11 @@
-import logging
 
-from click import clear
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-from telegram import Chat, Message, User
-from telegram.ext import filters
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, CallbackContext, MessageHandler
+from telegram import Update
+from telegram.ext import CallbackContext
 
-from api.main import load_active_user
-import api.models as models
-import api.enums
-import db
 import keyboards
-import replies
-from states import State, set_state, get_state, clear_state
-from static import WORKING_LANGUAGES, DEFAULT_GAME
+from locales import translate, Token
+from states import State, set_state
 
-from bot.utils import get_entities
-
-from locales import translate, get_user_language, TRANSLATIONS, Token
 
 async def intro(update: Update, context: CallbackContext):
     reply = translate(Token.TUTO_INTRO, update)

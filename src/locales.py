@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from curses import OK
 from enum import Enum, auto
-from re import A
 
 import telegram
 
@@ -25,7 +23,6 @@ def translate(token:Token, update:telegram.Update):
 class Token(Enum):
 
     OK = auto()
-
     YES = auto()
     NO = auto()
 
@@ -67,6 +64,7 @@ class Token(Enum):
 
     # Messages
     UNKNOWN_COMMAND = auto()
+    UNKNOWN_MESSAGE = auto()
     DEFAULT_GREETING = auto()
     DEFAULT_UNKNOWN = auto()
 

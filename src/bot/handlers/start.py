@@ -9,7 +9,6 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Conve
 import api.models as models
 from api.main import load_active_user
 from bot.handlers import onboarding, tutorial
-from bot.handlers.state import handle_user_state
 from bot.utils import get_entities, _reset
 import keyboards
 from locales import translate, Token
