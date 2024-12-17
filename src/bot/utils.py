@@ -13,8 +13,6 @@ def get_entities(update: Update) -> tuple[Chat, Message, User]:
 
 
 async def _reset():
-    global user_states
-    user_states = {}
     pierre = 6384730936
     await models.User.ax_coll.delete_one({'id':pierre})
     await db.ASYNC.team_members.delete_one({

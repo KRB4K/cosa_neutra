@@ -73,9 +73,7 @@ async def process_has_team_response(update: Update, context: CallbackContext) ->
     
 
 async def register_in_team(update: Update, context: CallbackContext) -> int:
-    user_id = update.effective_user.id
     active_user = await load_active_user(update, context)
-    # user_states[user_id]["team"] = update.message.text
     print('In team', update.message.text)
 
     active_user.register_in_team(update.message.text)

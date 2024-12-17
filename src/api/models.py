@@ -11,7 +11,6 @@ from typing import Any, Iterable, Type, TypeVar
 
 from bson import ObjectId
 import telegram
-from telegram.ext import CallbackContext
 
 from api.enums import Roles
 import db
@@ -384,12 +383,3 @@ class Hybrid(UserWithRole):
             other_cls = Neutralization if cls == Segment else Segment
             item = other_cls.pick_next_for(self)
             return item
-    
-
-
-def get_existing_users_ids():
-    return User.sx_coll.distinct('id')
-
-async def active_user(update: telegram.Update, context: CallbackContext) -> User:
-    user = context.user_data['user'] # type: ignore
-    return User.from_id(user.id)

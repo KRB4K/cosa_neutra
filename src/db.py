@@ -5,7 +5,6 @@ from motor.motor_asyncio import AsyncIOMotorCollection as AsyncCollection
 from pymongo import MongoClient
 from pymongo.collection import Collection
 
-
 import settings
 
 
