@@ -1,49 +1,60 @@
-import logging
 
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-from telegram import Chat, Message, User
-from telegram.ext import filters
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, CallbackContext, MessageHandler
+from telegram import Update
+from telegram.ext import CallbackContext
 
-from api.main import load_active_user
-import api.models as models
+
 import api.enums
-import db
+from api.main import load_active_user
+from bot.utils import get_entities
 import keyboards
-from states import STATES
-from static import WORKING_LANGUAGES, DEFAULT_GAME
+from locales import translate, get_user_language, TRANSLATIONS, Token
+import replies
+from states import State, set_state, clear_state
 
-from locales import translate, Token
+
 
 async def ask_language(update: Update, context: CallbackContext) -> int:
     """Handler to ask for the user's working language."""
 
     reply = translate(Token.ASK_LANGUAGE, update)
-    
+    # set_state(context, State.LANGUAGE_IS_ASKED)
+    # return await update.message.reply_text(reply)
+    # return await update.message.reply_text(reply, reply_markup=keyboards.working_languages(update))
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=reply,
         reply_markup = keyboards.working_languages(update)
     )
-    return STATES.ASK_IF_IN_TEAM
+    set_state(context, State.LANGUAGE_IS_ASKED)
+
+async def set_language(update: Update, context: CallbackContext) -> int:
+    _, message, _ = get_entities(update)
+    user = await load_active_user(update, context)
+    user_lang = get_user_language(update)
+    allowed_inputs = list(TRANSLATIONS[user_lang].values())
+    if not message.text in allowed_inputs:
+        valid_inputs = ", ".join(allowed_inputs)
+        await update.message.reply_text(
+            f"Invalid language. Please select one of the following: {valid_inputs}"
+        )
+    user.update(working_language=message.text)
+    set_state(context, State.HAS_TEAM_IS_ASKED)
+    return await ask_if_in_team(update, context)
+    
 
 async def ask_if_in_team(update: Update, context: CallbackContext) -> int:
     """Handler to ask if the user has a team."""
-    user_id = update.effective_user.id
-    active_user = await load_active_user(update, context)
-    active_user.update(lang=update.message.text)
-    # user_states[user_id] = {"language": update.message.text}
-
     reply = translate(Token.ASK_IF_IN_TEAM, update)
+    
+    set_state(context, State.HAS_TEAM_IS_ASKED)
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=reply,
         reply_markup = keyboards.yes_or_no(update)
     )
-    return STATES.ASK_TEAM
 
-async def ask_team(update: Update, context: CallbackContext) -> int:
+async def process_has_team_response(update: Update, context: CallbackContext) -> int:
     """Handler to ask if the user has a team."""
     msg = update.message.text
     print("is in team?", update.message.text)
@@ -54,9 +65,10 @@ async def ask_team(update: Update, context: CallbackContext) -> int:
             text=translate(Token.ASK_TEAM, update),
             reply_markup = await keyboards.teams(update)
         )
-        return STATES.REGISTER_IN_TEAM
+        set_state(context, State.IN_WHICH_TEAM_IS_ASKED)
 
     else:
+        set_state(context, State.WHICH_ROLE_IS_ASKED)
         return await ask_role(update, context)
     
 
@@ -67,7 +79,7 @@ async def register_in_team(update: Update, context: CallbackContext) -> int:
     print('In team', update.message.text)
 
     active_user.register_in_team(update.message.text)
-
+    set_state(context, State.WHICH_ROLE_IS_ASKED)
     return await ask_role(update, context)
 
 
@@ -78,11 +90,10 @@ async def ask_role(update: Update, context: CallbackContext) -> int:
         text=translate(Token.ASK_ROLE, update),
         reply_markup=keyboards.roles(update)
     )
-    return STATES.FINISH_ONBOARDING
+    # return STATES.FINISH_ONBOARDING
 
 async def finish_onboarding(update: Update, context: CallbackContext) -> int:
     """Handler to finish onboarding process."""
-    user_id = update.effective_user.id
     active_user = await load_active_user(update, context)
 
     msg = update.message.text
@@ -100,9 +111,8 @@ async def finish_onboarding(update: Update, context: CallbackContext) -> int:
 
     active_user.update(role=role)
     
+    clear_state(context)
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text=translate(Token.FINISH_ONBOARDING, update),
-        reply_markup=keyboards.main_menu(update)
+        text=replies.main_menu(update, context)
     )
-    return ConversationHandler.END
