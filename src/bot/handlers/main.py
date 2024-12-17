@@ -1,32 +1,15 @@
-import logging
-
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-from telegram import Chat, Message, User
-from telegram.ext import filters
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, CallbackContext, MessageHandler
-
-import api.models as models
-import db
-from log import logger
-from states import State
-from static import WORKING_LANGUAGES, DEFAULT_GAME
-
-from bot.handlers.onboarding import ask_if_in_team, register_in_team, ask_role, finish_onboarding
-from bot.handlers.start import start_handler
-from bot.handlers.fallbacks import default_handler, unknown_command_handler
-
 from telegram import Update
-from telegram.ext import CallbackContext, ContextTypes
+from telegram.ext import ContextTypes
 
 
 from api.main import load_active_user
 from bot.handlers.fallbacks import default_handler
 from bot.handlers import onboarding, play, tutorial
 from bot.utils import get_entities
+from locales import get_user_language, translate, Token
 import replies
-from states import State, get_state, set_state, clear_state
+from states import State, get_state
 
-from locales import get_user_language, translate, TRANSLATIONS, Token
 
 
 async def message_handler(

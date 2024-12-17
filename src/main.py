@@ -3,7 +3,8 @@ from telegram import Update
 from telegram.ext import filters
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler
 
-from bot.handlers.main import message_handler, unknown_command_handler, default_handler
+from bot.handlers.fallbacks import unknown_command_handler, default_handler
+from bot.handlers.main import message_handler
 from bot.handlers.start import start_handler
 from bot.handlers.play import submit
 from bot.handlers.tutorial import intro

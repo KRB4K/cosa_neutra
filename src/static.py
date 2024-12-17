@@ -1,5 +1,3 @@
-import datetime
-
 import db
 from locales import Token
 

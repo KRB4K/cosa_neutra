@@ -1,10 +1,10 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from dataclasses import fields as list_fields
 from datetime import datetime
-from enum import Enum
 import logging
 import random
 from typing import Any, Iterable, Type, TypeVar
@@ -13,12 +13,10 @@ from bson import ObjectId
 import telegram
 from telegram.ext import CallbackContext
 
-from api.enums import Roles, NonAdminRoles
+from api.enums import Roles
 import db
 from static import DEFAULT_GAME, DEFAULT_WORKING_LANGUAGE
-import static
 from utils import only, today
-from abc import ABC, abstractmethod
 
 
 T = TypeVar('T', bound='Model')
@@ -86,15 +84,6 @@ class Model(_Custom):
         filter, update = self._update(d, force, **kw)
         try:
             self.sx_coll.update_one(filter, update)
-            return True
-        except Exception as e:
-            logging.error('Update failed', exc_info=e)
-            return False
-        
-    async def async_update(self, d: dict=None, force: dict = None, **kw) -> bool:
-        filter, update = self._update(d, force, **kw)
-        try:
-            await self.ax_coll.update_one(filter, update)
             return True
         except Exception as e:
             logging.error('Update failed', exc_info=e)
@@ -301,12 +290,6 @@ class User(Model):
     role: Roles = None
 
     @classmethod
-    def exists(cls, user:telegram.User):
-        if cls.sx_coll.find_one({'id':user.id}, {'_id':1}):
-            return True
-        return False
-
-    @classmethod
     def create_user(cls, user:telegram.User, chat_id:str):
         now = datetime.now()
         record = {
@@ -331,10 +314,7 @@ class User(Model):
         if record:
             return cls.from_record(record)
         
-    
-    def set_working_language(self, lang:str):
-        self.update(working_language=lang)
-        
+
     def register_in_team(self, team_name: str, game: ObjectId=DEFAULT_GAME):
         existing = {
             'player': self.id,

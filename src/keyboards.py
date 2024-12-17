@@ -3,10 +3,7 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 import db
 from locales import translate, Token
 from static import DEFAULT_GAME, WORKING_LANGUAGES
-from static import tokens as LANG_TOKENS
 from utils import sliced
-
-LANG_TOKENS_LOOKUP = {v:k for k,v in LANG_TOKENS.items()}
 
 def ok(update: Update) -> ReplyKeyboardMarkup:
     buttons = [

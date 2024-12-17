@@ -1,23 +1,17 @@
-import logging
 
-from click import clear
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-from telegram import Chat, Message, User
-from telegram.ext import filters
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, CallbackContext, MessageHandler
+from telegram import Update
+from telegram.ext import CallbackContext
 
-from api.main import load_active_user
-import api.models as models
+
 import api.enums
-import db
-import keyboards
-import replies
-from states import State, set_state, get_state, clear_state
-from static import WORKING_LANGUAGES, DEFAULT_GAME
-
+from api.main import load_active_user
 from bot.utils import get_entities
-
+import keyboards
 from locales import translate, get_user_language, TRANSLATIONS, Token
+import replies
+from states import State, set_state, clear_state
+
+
 
 async def ask_language(update: Update, context: CallbackContext) -> int:
     """Handler to ask for the user's working language."""
@@ -43,17 +37,13 @@ async def set_language(update: Update, context: CallbackContext) -> int:
         await update.message.reply_text(
             f"Invalid language. Please select one of the following: {valid_inputs}"
         )
-    user.set_working_language(message.text)
+    user.update(working_language=message.text)
     set_state(context, State.HAS_TEAM_IS_ASKED)
     return await ask_if_in_team(update, context)
     
 
 async def ask_if_in_team(update: Update, context: CallbackContext) -> int:
     """Handler to ask if the user has a team."""
-    user_id = update.effective_user.id
-    active_user = await load_active_user(update, context)
-    # user_states[user_id] = {"language": update.message.text}
-
     reply = translate(Token.ASK_IF_IN_TEAM, update)
     
     set_state(context, State.HAS_TEAM_IS_ASKED)
@@ -63,7 +53,6 @@ async def ask_if_in_team(update: Update, context: CallbackContext) -> int:
         text=reply,
         reply_markup = keyboards.yes_or_no(update)
     )
-    # return STATES.ASK_TEAM
 
 async def process_has_team_response(update: Update, context: CallbackContext) -> int:
     """Handler to ask if the user has a team."""
@@ -105,7 +94,6 @@ async def ask_role(update: Update, context: CallbackContext) -> int:
 
 async def finish_onboarding(update: Update, context: CallbackContext) -> int:
     """Handler to finish onboarding process."""
-    user_id = update.effective_user.id
     active_user = await load_active_user(update, context)
 
     msg = update.message.text
@@ -122,8 +110,6 @@ async def finish_onboarding(update: Update, context: CallbackContext) -> int:
         raise ValueError("Invalid role")
 
     active_user.update(role=role)
-
-    print('finishing onboarding')
     
     clear_state(context)
     await context.bot.send_message(
