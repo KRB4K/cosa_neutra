@@ -1,4 +1,6 @@
 
+from datetime import datetime
+
 def only(d: str, keys: str|list[str]) -> dict:
 	"""Returns a dictionary where only `keys` are kept"""
 	if not '__iter__' in dir(keys) or isinstance(keys, str):
@@ -25,4 +27,7 @@ def sliced(iterable, n, stub=True):
                     yield x
                 return
         yield x
-	
+
+def today():
+    """Returns the current date at midnight"""
+    return datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)

@@ -8,13 +8,14 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Conve
 
 import api.models as models
 from api.main import load_active_user
-from bot.handlers import onboarding
+from bot.handlers import onboarding, tutorial
 from bot.handlers.state import handle_user_state
 from bot.utils import get_entities, _reset
 import keyboards
 from locales import translate, Token
 from log import logger
-from states import State, get_state, set_state, clear_state
+import replies
+from states import State, get_state, set_state, clear_state, clear_current_to_do
 
 async def say_welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply = translate(Token.WELCOME, update)
@@ -28,18 +29,22 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     user_id = update.effective_user.id
     chat, message, user = get_entities(update)
     
-    await _reset()
+    clear_state(context)
+    clear_current_to_do(context)
+    # await _reset()
 
     logger.info(f"User {user_id} has started the bot.")
     await say_welcome(update, context)
 
     active_user = await load_active_user(update, context)
+    if active_user:
+        team  = active_user.get_team()
     if not active_user:
         active_user = models.User.create_user(user, chat.id)
-        x = onboarding.ask_language(update, context)
-        print('x', x)
-        y = await x
-        print('y', y)
-        return y
-        
-    return keyboards.main_menu(update)
+        reply = await tutorial.intro(update, context)
+        return reply
+    
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=replies.main_menu(update, context)
+    )

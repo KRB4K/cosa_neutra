@@ -8,9 +8,6 @@ async def unknown_command_handler(update: Update, context: ContextTypes.DEFAULT_
 
 async def default_handler(update: Update, context: CallbackContext) -> None:
     """Handler for any non-command messages."""
-    print(f"Callback Query: {update.callback_query}")
-    print(f"Effective Chat: {update.effective_chat}")
-    print(f"Effective Message: {update.effective_message}")
     user_message = update.message.text
     logger.info(f"Received message: {user_message} from user: {update.effective_user.id}")
 
