@@ -1,10 +1,7 @@
 import httpx
 from telegram import Chat
 
-from api import models
-from settings import BOT_TOKEN, GAME_NAME, TELEGRAM_API
-
-user_states = {id:{} for id in models.get_existing_users_ids()}
+from settings import BOT_TOKEN, TELEGRAM_API
 
 
 async def get(url, *args, **kwargs):
