@@ -36,9 +36,7 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     await say_welcome(update, context)
 
     active_user = await load_active_user(update, context)
-    if active_user:
-        team  = active_user.get_team()
-    if not active_user:
+    if not active_user or not active_user.role:
         active_user = models.User.create_user(user, chat.id)
         reply = await tutorial.intro(update, context)
         return reply
