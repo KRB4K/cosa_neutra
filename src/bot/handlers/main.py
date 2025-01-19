@@ -20,7 +20,7 @@ async def message_handler(
     print("state", state)
     _, message, _ = get_entities(update)
     user = await load_active_user(update, context)
-    user_lang = get_user_language(update)
+    user_lang = get_user_language(context)
 
     
     match state:

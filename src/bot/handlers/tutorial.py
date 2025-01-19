@@ -5,10 +5,14 @@ from telegram.ext import CallbackContext
 import keyboards
 from locales import translate, Token
 from states import State, set_state
-
+import stickers
 
 async def intro(update: Update, context: CallbackContext):
     reply = translate(Token.TUTO_INTRO, context)
+    await context.bot.send_sticker(
+        chat_id=update.effective_chat.id,
+        sticker=stickers.QUESTION
+    )
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=reply,
@@ -90,6 +94,10 @@ async def tuto_team(update: Update, context: CallbackContext):
 
 async def tuto_end(update: Update, context: CallbackContext):
     reply = translate(Token.TUTO_END, context)
+    await context.bot.send_sticker(
+        chat_id=update.effective_chat.id,
+        sticker=stickers.HERO
+    )
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=reply,

@@ -9,8 +9,8 @@ from bot.utils import get_entities
 import keyboards
 from locales import translate, get_user_language, TRANSLATIONS, Token
 import replies
-from states import State, set_state, clear_state
-
+from states import State, set_state, clear_state, set_current_lang
+from bot.handlers import tutorial
 
 
 async def ask_language(update: Update, context: CallbackContext) -> int:
@@ -30,16 +30,24 @@ async def ask_language(update: Update, context: CallbackContext) -> int:
 async def set_language(update: Update, context: CallbackContext) -> int:
     _, message, _ = get_entities(update)
     user = await load_active_user(update, context)
-    user_lang = get_user_language(update)
+    user_lang = get_user_language(context)
     allowed_inputs = list(TRANSLATIONS[user_lang].values())
     if not message.text in allowed_inputs:
         valid_inputs = ", ".join(allowed_inputs)
         await update.message.reply_text(
             f"Invalid language. Please select one of the following: {valid_inputs}"
         )
-    user.update(working_language=message.text)
-    set_state(context, State.HAS_TEAM_IS_ASKED)
-    return await ask_if_in_team(update, context)
+    lang = 'en'
+    match message.text:
+        case 'French':
+            lang = 'fr'
+        case 'English':
+            lang = 'en'
+
+    user.update(working_language=lang)
+    set_current_lang(context, lang)
+    reply = await tutorial.intro(update, context)
+    return reply
     
 
 async def ask_if_in_team(update: Update, context: CallbackContext) -> int:
