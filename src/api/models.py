@@ -188,7 +188,8 @@ class Neutralization(Model):
         """Returns the next neutralization to review for the user"""
         team_mates = [user]
         # A user cannot review a neutralization from a team mate
-        if team := user.get_team(game):
+        team = user.get_team(game)
+        if team:
             team_mates += team.get_members(game)
         forbidden = [m.oid for m in team_mates]
         pipeline = [
