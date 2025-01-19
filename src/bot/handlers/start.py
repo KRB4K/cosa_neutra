@@ -14,10 +14,10 @@ import keyboards
 from locales import translate, Token
 from log import logger
 import replies
-from states import State, get_state, set_state, clear_state, clear_current_to_do
+from states import State, get_state, set_state, clear_state, clear_current_to_do, set_current_lang
 
 async def say_welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply = translate(Token.WELCOME, update)
+    reply = translate(Token.WELCOME, context)
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=reply,
@@ -27,20 +27,23 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     """Handler for /start command."""
     user_id = update.effective_user.id
     chat, message, user = get_entities(update)
+
     
     clear_state(context)
     clear_current_to_do(context)
     # await _reset()
 
     logger.info(f"User {user_id} has started the bot.")
-    await say_welcome(update, context)
-
+    
     active_user = await load_active_user(update, context)
     if not active_user or not active_user.role:
+        await say_welcome(update, context)
         active_user = models.User.create_user(user, chat.id)
         reply = await tutorial.intro(update, context)
         return reply
     
+    set_current_lang(context, active_user.working_language)
+    await say_welcome(update, context)
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=replies.main_menu(update, context)

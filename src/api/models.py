@@ -118,17 +118,25 @@ class Segment(Model):
     ax_coll: db.AsyncCollection = db.ASYNC.segments
 
     game: ObjectId
-    english: str
-    french: str
-    last_updated: datetime = None
     source: str
+    target: str
+    to_neutralize: str
+    source_lang: str
+    target_lang: str
+    to_neutralize_lang: str
+    last_updated: datetime = None
+    origin: str
+    
 
     @classmethod
     def pick_next_for(cls, user: User, game: ObjectId=DEFAULT_GAME) -> dict:
         """Returns the next segment for the user"""
         neutralizations = user.get_neutralizations()
         done = [n.segment for n in neutralizations]
-        segment = cls.sx_coll.find_one({'_id':{'$nin':done}})  # , 'lang':user.working_language
+        segment = cls.sx_coll.find_one({
+            '_id':{'$nin':done},
+            'to_neutralize_lang':user.working_language
+        }) 
         segment_id = None
         if segment:
             segment = cls.from_record(segment)
@@ -136,7 +144,7 @@ class Segment(Model):
         return {
             'segment': segment_id,
             'task':'neutralization',
-            'data':segment.french
+            'data':getattr(segment, segment.to_neutralize)
         }
 
 
@@ -149,16 +157,20 @@ class Neutralization(Model):
     created_at: datetime
     segment: ObjectId
     text: str
+    lang: str
     user: ObjectId
-    
 
     @classmethod
     def insert(cls, segment: ObjectId, by: User, text:str, ) -> Neutralization:
+        original = Segment.from_oid(segment)
+        if not original:
+            return
         record = {
             'created_at': datetime.now(),
             'segment': segment,
             'text': text,
-            'user': by.oid            
+            'user': by.oid,
+            'lang': original.to_neutralize_lang            
         }
         # If a record matching on 'segment' and 'user' already exists, update it
         record = cls.sx_coll.find_one_and_update(
@@ -167,6 +179,8 @@ class Neutralization(Model):
             upsert=True,
             return_document=True  # Return the updated document
         )
+        # print(record)
+        # print(cls.from_record(record))
         return cls.from_record(record)
 
     @classmethod
@@ -240,7 +254,7 @@ class Review(Model):
 class Game(Model):
     active: bool
     description: str
-    lang: str
+    lang: str  # currently unused and incompatible with the current design where languages are mixed
     name: str
 
     @staticmethod

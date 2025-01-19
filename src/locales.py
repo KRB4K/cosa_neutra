@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 from enum import Enum, auto
+import states
 
 import telegram
+from telegram.ext import ContextTypes
 
 DEFAULT = 'en'
 
-def get_user_language(update:telegram.Update):
-    lang = update.effective_user.language_code
+def get_user_language(context: ContextTypes.DEFAULT_TYPE):
+    lang = states.get_current_lang(context)
     lang = lang if lang in TRANSLATIONS else DEFAULT
     return lang
 
-def translate(token:Token, update:telegram.Update):
-    lang = get_user_language(update)
+def translate(token:Token, context:ContextTypes.DEFAULT_TYPE, lang:str=None):
+    if not lang:
+        lang = get_user_language(context)
     try:
         translation = TRANSLATIONS[lang][token]
     except KeyError:

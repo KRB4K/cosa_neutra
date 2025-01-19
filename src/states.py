@@ -28,21 +28,40 @@ class State(Enum):
     
 
 
-def set_current_to_do(context: CallbackContext, to_do:str) -> None:
+def set_current_to_do(context: CallbackContext, to_do: str) -> None:
     context.user_data["task"] = to_do  # type: ignore
     logger.info(f"Current task set to: {to_do}")
 
 
 def get_current_to_do(context: CallbackContext) -> str:
-    if "task" in context.user_data: # type: ignore
-        return context.user_data["task"] # type: ignore
+    if "task" in context.user_data:  # type: ignore
+        return context.user_data["task"]  # type: ignore
     else:
         set_current_to_do(context, "")
         return ""
-    
+
+
 def clear_current_to_do(context: CallbackContext) -> None:
     set_current_to_do(context, "")
     logger.info("Current task cleared")
+
+
+def set_current_lang(context: CallbackContext, lang: str) -> None:
+    context.user_data["lang"] = lang  # type: ignore
+    logger.info(f"Current language set to: {lang}")
+
+
+def get_current_lang(context: CallbackContext) -> str:
+    if "lang" in context.user_data:  # type: ignore
+        return context.user_data["lang"]  # type: ignore
+    else:
+        set_current_lang(context, "")
+        return ""
+
+
+def clear_current_lang(context: CallbackContext) -> None:
+    set_current_lang(context, "")
+    logger.info("Current language cleared")
 
 
 

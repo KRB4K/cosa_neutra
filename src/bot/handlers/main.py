@@ -21,58 +21,59 @@ async def message_handler(
     _, message, _ = get_entities(update)
     user = await load_active_user(update, context)
     user_lang = get_user_language(update)
+
     
     match state:
         case State.NONE:
             return await default_handler(update, context)
         
         case State.TUTO_INTRO_SENT:
-            if message.text != translate(Token.OK, update):
+            if message.text != translate(Token.OK, context):
                 return await tutorial.intro(update, context)
             return await tutorial.game_goal(update, context)
         
         case State.TUTO_GAME_GOAL_SENT:
-            if message.text != translate(Token.OK, update):
+            if message.text != translate(Token.OK, context):
                 return await tutorial.game_goal(update, context)
             return await tutorial.tuto_roles(update, context)
         
         case State.TUTO_ROLES_SENT:
-            if message.text != translate(Token.OK, update):
+            if message.text != translate(Token.OK, context):
                 return await tutorial.tuto_roles(update, context)
             return await tutorial.tuto_neutralizer(update, context)
         
         case State.TUTO_NEUTRALIZER_SENT:
-            if message.text != translate(Token.OK, update):
+            if message.text != translate(Token.OK, context):
                 return await tutorial.tuto_neutralizer(update, context)
             return await tutorial.tuto_reviewer(update, context)
         
         case State.TUTO_REVIEWER_SENT:
-            if message.text != translate(Token.OK, update):
+            if message.text != translate(Token.OK, context):
                 return await tutorial.tuto_reviewer(update, context)
             return await tutorial.tuto_hybrid(update, context)
         
         case State.TUTO_HYBRID_SENT:
-            if message.text != translate(Token.OK, update):
+            if message.text != translate(Token.OK, context):
                 return await tutorial.tuto_hybrid(update, context)
             return await tutorial.tuto_leaderboard(update, context)
         
         case State.TUTO_LEADERBOARD_SENT:
-            if message.text != translate(Token.OK, update):
+            if message.text != translate(Token.OK, context):
                 return await tutorial.tuto_leaderboard(update, context)
             return await tutorial.tuto_streak(update, context)
         
         case State.TUTO_STREAK_SENT:
-            if message.text != translate(Token.OK, update):
+            if message.text != translate(Token.OK, context):
                 return await tutorial.tuto_streak(update, context)
             return await tutorial.tuto_team(update, context)
         
         case State.TUTO_TEAM_SENT:
-            if message.text != translate(Token.OK, update):
+            if message.text != translate(Token.OK, context):
                 return await tutorial.tuto_team(update, context)
             return await tutorial.tuto_end(update, context)
         
         case State.TUTO_END_SENT:
-            if message.text != translate(Token.OK, update):
+            if message.text != translate(Token.OK, context):
                 return await tutorial.tuto_end(update, context)
             if not user.role:
                 return await onboarding.ask_if_in_team(update, context)

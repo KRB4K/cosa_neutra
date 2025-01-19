@@ -24,7 +24,7 @@ async def submit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     to_do = active_user.next_to_do()  # default value for None
     data = to_do.get("data")
     if not data:
-        reply = translate(Token.NOTHING_TO_DO, update)
+        reply = translate(Token.NOTHING_TO_DO, context)
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=reply
@@ -37,12 +37,12 @@ async def submit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     match task:
 
         case 'neutralization':
-            reply += translate(Token.NEUTRALIZE_THIS, update)
+            reply += translate(Token.NEUTRALIZE_THIS, context)
             reply += '\n\n\n'
             reply += f'<b>{data}</b>'
             
         case 'review':
-            reply += translate(Token.REVIEW_THIS, update)
+            reply += translate(Token.REVIEW_THIS, context)
             reply += '\n\n\n'
             data = [f'<b>{d}</b>' if i % 2 == 0 else f'<i>{d}</i>' for i, d in enumerate(data)]
             reply += '\n\n'.join(data)
@@ -76,10 +76,10 @@ async def register_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 by=active_user
             )
             if neutralization:
-                reply = translate(Token.SUCCESSFUL_NEW_NEUTRALIZATION, update)
+                reply = translate(Token.SUCCESSFUL_NEW_NEUTRALIZATION, context)
                 
             else:
-                reply = translate(Token.COULD_NOT_SAVE_SUBMISSION, update)
+                reply = translate(Token.COULD_NOT_SAVE_SUBMISSION, context)
                 
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
@@ -94,7 +94,7 @@ async def register_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text = update.message.text.strip()
             neutralization = models.Neutralization.from_oid(oid)
             if not neutralization:
-                reply = translate(Token.COULD_NOT_SAVE_SUBMISSION, update)
+                reply = translate(Token.COULD_NOT_SAVE_SUBMISSION, context)
             else:
                 approved = text == neutralization.text
                 review = models.Review.insert(
@@ -104,9 +104,9 @@ async def register_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     by=active_user
                 )
                 if review:
-                    reply = translate(Token.SUCCESSFUL_NEW_REVIEW, update)
+                    reply = translate(Token.SUCCESSFUL_NEW_REVIEW, context)
                 else:
-                    reply = translate(Token.COULD_NOT_SAVE_SUBMISSION, update)
+                    reply = translate(Token.COULD_NOT_SAVE_SUBMISSION, context)
             
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
