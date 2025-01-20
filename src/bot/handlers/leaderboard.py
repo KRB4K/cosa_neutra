@@ -2,6 +2,7 @@ from operator import ne
 import re
 import db
 import api.models as models
+from locales import translate, get_user_language, TRANSLATIONS, Token
 from telegram.ext import ApplicationBuilder, ContextTypes
 from utils import align_with_even_length
 
@@ -30,7 +31,7 @@ async def leaderboard(update, context: ContextTypes.DEFAULT_TYPE):
     neutralizers = '\n'.join([(align_with_even_length(str(score), name)) for name, score in neutralizers])
     reviewers = '\n'.join([(align_with_even_length(str(score), name)) for name, score in reviewers])
 
-    reply = f'Neutralizers:\n{neutralizers}\n\nReviewers:\n{reviewers}'
+    reply = f'{translate(Token.NEUTRALIZER_ROLE, context)}:\n{neutralizers}\n\n{translate(Token.REVIEWER_ROLE, context)}:\n{reviewers}'
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
