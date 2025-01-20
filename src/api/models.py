@@ -202,7 +202,8 @@ class Neutralization(Model):
                 '$match': {
                     'segment':{'$nin':done},
                     'user': {'$nin': forbidden},
-                    'created_at': {'$lt': today()}
+                    'created_at': {'$lt': today()},
+                    'lang': user.working_language
                 }
             },
             {
