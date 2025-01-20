@@ -15,13 +15,24 @@ import keyboards
 import replies
 from static import WORKING_LANGUAGES, DEFAULT_GAME
 import states
+from utils import today
+
 from locales import translate, get_user_language, TRANSLATIONS, Token
 
 async def submit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     active_user: models.UserWithRole = await load_active_user(update, context)
     assert isinstance(active_user, models.UserWithRole)
 
-    to_do = active_user.next_to_do()  # default value for None
+    available_tasks = active_user.get_available_task_type()
+    if not available_tasks:
+        reply = translate(Token.LIMIT_REACHED, context)
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=reply
+        )
+        return
+
+    to_do = active_user.next_to_do(available_tasks)
     data = to_do.get("data")
     if not data:
         reply = translate(Token.NOTHING_TO_DO, context)
@@ -34,6 +45,7 @@ async def submit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     task = to_do['task']
     to_do_id = f'{task}_{to_do["segment"]}'
     reply = ''
+
     match task:
 
         case 'neutralization':
@@ -63,19 +75,22 @@ async def register_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
     assert isinstance(active_user, models.UserWithRole)
 
     to_do = states.get_current_to_do(context)
+    print('in register task, to do', to_do)
     type, id = to_do.split('_')
     oid = ObjectId(id)
+
+    print('OID', oid)
 
     match type:
 
         case 'neutralization':
-            text = update.message.text
-            neutralization = models.Neutralization.insert(
+            text = update.message.text.strip()
+            segment = models.Neutralization.insert(
                 segment=oid,
                 text=text,
                 by=active_user
             )
-            if neutralization:
+            if segment:
                 reply = translate(Token.SUCCESSFUL_NEW_NEUTRALIZATION, context)
                 
             else:
@@ -92,21 +107,17 @@ async def register_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         case 'review':
             text = update.message.text.strip()
-            neutralization = models.Neutralization.from_oid(oid)
-            if not neutralization:
-                reply = translate(Token.COULD_NOT_SAVE_SUBMISSION, context)
+        
+            review = models.Review.insert(
+                segment=oid,
+                text=text,
+                by=active_user
+            )
+            print('reviewed', review)
+            if review:
+                reply = translate(Token.SUCCESSFUL_NEW_REVIEW, context)
             else:
-                approved = text == neutralization.text
-                review = models.Review.insert(
-                    neutralization=neutralization,
-                    text=text,
-                    approved=approved,
-                    by=active_user
-                )
-                if review:
-                    reply = translate(Token.SUCCESSFUL_NEW_REVIEW, context)
-                else:
-                    reply = translate(Token.COULD_NOT_SAVE_SUBMISSION, context)
+                reply = translate(Token.COULD_NOT_SAVE_SUBMISSION, context)
             
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
@@ -114,7 +125,7 @@ async def register_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             states.clear_current_to_do(context)
             states.clear_state(context)
-        
+    print("clearing in register task")
     states.clear_current_to_do(context)
     states.set_state(context, states.State.NONE)
     await context.bot.send_message(

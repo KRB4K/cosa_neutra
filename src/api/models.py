@@ -14,8 +14,9 @@ import telegram
 
 from api.enums import Roles
 import db
+import settings
 from static import DEFAULT_GAME, DEFAULT_WORKING_LANGUAGE
-from utils import only, today
+from utils import only, today, find_streaks
 
 
 T = TypeVar('T', bound='Model')
@@ -133,10 +134,11 @@ class Segment(Model):
         """Returns the next segment for the user"""
         neutralizations = user.get_neutralizations()
         done = [n.segment for n in neutralizations]
-        segment = cls.sx_coll.find_one({
+        segment = cls.sx_coll.find({
             '_id':{'$nin':done},
             'to_neutralize_lang':user.working_language
-        }) 
+        }).sort('_id', 1)
+        segment = next(segment, None)
         segment_id = None
         if segment:
             segment = cls.from_record(segment)
@@ -192,9 +194,13 @@ class Neutralization(Model):
         if team:
             team_mates += team.get_members(game)
         forbidden = [m.oid for m in team_mates]
+
+        done = list({r.segment for r in user.get_reviews()})   # done = Review.sx_coll.distinct('segment', {'user':user.oid})
+
         pipeline = [
             {
                 '$match': {
+                    'segment':{'$nin':done},
                     'user': {'$nin': forbidden},
                     'created_at': {'$lt': today()}
                 }
@@ -208,7 +214,7 @@ class Neutralization(Model):
             },
             # Sort by the number of neutralizations (most first)
             {
-                '$sort': {'count': -1}
+                '$sort': {'count': -1, '_id': -1}
             },
         ]
         neutralizations = list(cls.sx_coll.aggregate(pipeline))
@@ -233,21 +239,20 @@ class Review(Model):
     sx_coll: db.Collection = db.SYNC.reviews
     ax_coll: db.AsyncCollection = db.ASYNC.reviews
 
-    neutralization: ObjectId
+    segment: ObjectId
     user: ObjectId
     created_at: datetime
     text: str
-    approved: bool
 
     @classmethod
-    def insert(cls, neutralization: ObjectId, by: User, text:str, approved: bool) -> Review:
+    def insert(cls, segment: ObjectId, by: User, text:str) -> Review:
         record = {
-            'neutralization': neutralization,
+            'segment': segment,
             'user': by.oid,
             'created_at': datetime.now(),
             'text': text,
-            'approved': approved
         }
+        print(record)
         cls.sx_coll.insert_one(record)
         return cls.from_record(record)
 
@@ -358,39 +363,118 @@ class User(Model):
             return None
         return Team.from_oid(membership['team'])
     
-    def get_neutralizations(self, game: ObjectId=DEFAULT_GAME):
+    def get_neutralizations(self, game: ObjectId=DEFAULT_GAME, filters:dict=None) -> list[Neutralization]:
+        filters = filters or {}
+        filters.update({'user':self.oid})
         records =  Neutralization.sx_coll.find({'user':self.oid})  # , 'game':game
         return [Neutralization.from_record(r) for r in records]
     
-    def get_reviews(self, game: ObjectId=DEFAULT_GAME):
-        records =  Review.sx_coll.find({'user':self.oid})  # , 'game':game
+    def get_reviews(self, game: ObjectId=DEFAULT_GAME, filters:dict=None) -> list[Review]:
+        filters = filters or {}
+        filters.update({'user':self.oid})
+        records =  Review.sx_coll.find(filters)  # , 'game':game
         return [Review.from_record(r) for r in records]
+    
     
 
         
 class UserWithRole(User, ABC):
 
     @abstractmethod
-    def next_to_do(self) -> dict:
-        return None
+    def next_to_do(self, *args, **kwargs) -> dict:
+        raise NotImplementedError()
+    
+    @abstractmethod
+    def get_available_task_type(self, *args, **kwargs) -> list[str]:
+        raise NotImplementedError()
+    
+
+    @abstractmethod
+    def get_score(self, *args, **kwargs) -> dict[str, int]:
+        raise NotImplementedError()
+    
+    @classmethod
+    def get_all_active_users(cls) -> list[UserWithRole]:
+        records = cls.sx_coll.find({'active':True})
+        users = []
+        for r in records:
+            role = r.get('role')
+            match role:
+                case 'neutralizer':
+                    cls = Neutralizer
+                case 'reviewer':
+                    cls = Reviewer
+                case 'hybrid':
+                    cls = Hybrid
+            users.append(cls.from_record(r))
+        return users
 
 
 class Neutralizer(UserWithRole):
 
-    def next_to_do(self):
+    def next_to_do(self, *args, **kwargs):
         return Segment.pick_next_for(self)
+    
+    def get_available_task_type(self) -> list[str]:
+        filters = {'created_at':today()}
+        print(self.get_neutralizations(filters=filters), settings.DAILY_NEUTRALIZATIONS)
+        if len(self.get_neutralizations(filters=filters)) >= settings.DAILY_NEUTRALIZATIONS:
+            return ['neutralization']
+        return []
+    
+    def get_score(self) -> dict[str, int]:
+        total = 0
+        neutralizations = self.get_neutralizations()
+        total += len(neutralizations)
+
+        # streaks = find_streaks(neutralizations)
+        # streaks_3 = [s for s in streaks if s['streak'] == 3]
+        # streaks_4 = [s for s in streaks if s['streak'] == 4]
+        # streak_n = [s for s in streaks if s['streak'] > 4]
+        # total += len(streaks)
+        
+        return {'neutralization': total}
+    
+    def get_streaks(self) -> list[dict]:
+        neutralizations = self.get_neutralizations()
+        streaks = find_streaks(neutralizations)
+        return streaks
 
 
 class Reviewer(UserWithRole):
 
-    def next_to_do(self):
+    def next_to_do(self, *args, **kwargs):
         return Neutralization.pick_next_for(self)
+    
+    def get_available_task_type(self) -> list[str]:
+        filters = {'created_at':today()}
+        print(self.get_reviews(filters=filters), settings.DAILY_REVIEWS)
+        if len(self.get_reviews(filters=filters)) >= settings.DAILY_REVIEWS:
+            return ['review']
+        return []
+    
+    def get_score(self) -> dict[str, int]:
+        total = 0
+        reviews = self.get_reviews()
+        total += len(reviews)
+        return {'review': total}
 
 class Hybrid(UserWithRole):
 
-    def next_to_do(self) -> dict:
+    def next_to_do(self, only:list[str]=None) -> dict:
         """Returns the next item to review or neutralize at random"""
-        cls = random.choice([Segment, Neutralization])
+        only = only or ['neutralization', 'review']
+        if not only:
+            raise ValueError('You must specify the type of task to do')
+
+        choices = []
+        for task in only:
+            if task == 'neutralization':
+                choices.append(Segment)
+            elif task == 'review':
+                choices.append(Neutralization)
+
+        cls = random.choice(choices)
         item = cls.pick_next_for(self)
         if item['data']:
             return item
@@ -398,3 +482,22 @@ class Hybrid(UserWithRole):
             other_cls = Neutralization if cls == Segment else Segment
             item = other_cls.pick_next_for(self)
             return item
+
+    def get_available_task_type(self) -> list[str]:
+        filters = {'created_at':{'$gte':today()}}
+        neutralizations = len(self.get_neutralizations(filters=filters))
+        reviews = len(self.get_reviews(filters=filters))
+        available = []
+        if neutralizations < settings.DAILY_NEUTRALIZATIONS:
+            available.append('neutralization')
+        if reviews < settings.DAILY_REVIEWS:
+            available.append('review')
+        print(neutralizations, reviews, settings.DAILY_NEUTRALIZATIONS, settings.DAILY_REVIEWS)
+        return available
+    
+    def get_score(self) -> dict[str, int]:
+        neutralizations = self.get_neutralizations()
+        reviews = self.get_reviews()
+        return {'neutralization': len(neutralizations), 'review': len(reviews)}
+
+    

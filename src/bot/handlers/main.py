@@ -82,7 +82,6 @@ async def message_handler(
                 text=replies.main_menu(update, context)
             )
                 
-        
         case State.NEED_LANGUAGE:
             return await onboarding.ask_language(update, context)
         

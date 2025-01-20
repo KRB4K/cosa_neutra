@@ -93,6 +93,8 @@ class Token(Enum):
     SUCCESSFUL_NEW_REVIEW = auto()
     COULD_NOT_SAVE_SUBMISSION = auto()
 
+    LIMIT_REACHED = auto()
+
 
 
 TRANSLATIONS = {
@@ -154,6 +156,8 @@ TRANSLATIONS = {
         Token.SUCCESSFUL_NEW_NEUTRALIZATION: "Your neutralization has been successfully submitted.",
         Token.SUCCESSFUL_NEW_REVIEW: "Your review has been successfully submitted.",
         Token.COULD_NOT_SAVE_SUBMISSION: "Your submission encountered an error.",
+
+        Token.LIMIT_REACHED: "You have reached the limit of participations for today. You will be able to play again starting midnight. See you tomorrow!",
     },
     'fr': {
         Token.OK: 'OK',
@@ -211,5 +215,7 @@ TRANSLATIONS = {
         Token.SUCCESSFUL_NEW_NEUTRALIZATION: "Ta neutralisation a été enregistrée avec succès.",
         Token.SUCCESSFUL_NEW_REVIEW: "Ta révision a été enregistrée avec succès.",
         Token.COULD_NOT_SAVE_SUBMISSION: "Ton entrée a rencontré une erreur.",
+
+        Token.LIMIT_REACHED: "Tu as atteint la limite de participations pour aujourd'hui. Tu pourras de nouveau jouer à partir de minuit. À demain !"
     }
 }

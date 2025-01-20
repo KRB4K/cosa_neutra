@@ -36,7 +36,7 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     
     clear_state(context)
     clear_current_to_do(context)
-    await _reset()
+    # await _reset()
 
     logger.info(f"User {user_id} has started the bot.")
     

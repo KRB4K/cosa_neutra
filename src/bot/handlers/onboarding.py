@@ -115,7 +115,7 @@ async def finish_onboarding(update: Update, context: CallbackContext) -> int:
     else:
         raise ValueError("Invalid role")
 
-    active_user.update(role=role)
+    active_user.update(role=role, active=True)
     
     clear_state(context)
     await context.bot.send_message(

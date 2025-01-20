@@ -8,3 +8,6 @@ GAME_NAME: str = os.getenv('game_name')
 MONGO_URI: str = os.getenv('mongo_uri')
 
 TELEGRAM_API = 'https://api.telegram.org'
+
+DAILY_NEUTRALIZATIONS = 5
+DAILY_REVIEWS = 5
