@@ -93,6 +93,7 @@ class Token(Enum):
     MAIN_MENU_HELP = auto()
     MAIN_MENU_END_GAME = auto()
     MAIN_MENU_LEADERBOARD = auto()
+    MAIN_MENU_REPORT = auto()
 
     NOTHING_TO_DO = auto()
     NEUTRALIZE_THIS = auto()
@@ -164,6 +165,7 @@ TRANSLATIONS = {
         Token.MAIN_MENU_HELP: "/help for assistance",
         Token.MAIN_MENU_END_GAME: "/end to end the game",
         Token.MAIN_MENU_LEADERBOARD: "/leaderboard to show the leaderboard",
+        Token.MAIN_MENU_REPORT: "/report to report an inappropriate segment (hate speech, trolling, etc.)",
 
         Token.NOTHING_TO_DO: "You have nothing to do at the moment.",
         Token.NEUTRALIZE_THIS: "Please neutralize the following segment. Type a gender-agnostic alternative or copy-paste the original sentence if it's good to go.",
@@ -231,6 +233,7 @@ TRANSLATIONS = {
         Token.MAIN_MENU_HELP: "/help pour obtenir de l'aide",
         Token.MAIN_MENU_END_GAME: "/end pour terminer le jeu",
         Token.MAIN_MENU_LEADERBOARD: "/leaderboard pour afficher le classement",
+        Token.MAIN_MENU_REPORT: "/report pour signaler un segment inapproprié (discours de haine, troll, etc.)",
 
         Token.NOTHING_TO_DO: "Tu n'as rien à faire pour le moment.",
         Token.NEUTRALIZE_THIS:  "Neutralise le segment suivant. Dans le chat, propose une alternative non-genrée ou copie-colle la phrase initiale si elle est déjà neutre.",
