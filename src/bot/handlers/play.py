@@ -70,7 +70,7 @@ async def submit(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             for i, d in enumerate(data, start=1):
-                reply = f'<b>N°{i}</b>'
+                reply = f'N°{i}'
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
                     text=reply,
@@ -78,8 +78,8 @@ async def submit(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
-                    text=d,
-                    # parse_mode='HTML'
+                    text=f'<b>{d}</b>',
+                    parse_mode='HTML'
                 )
 
     states.set_current_to_do(context, to_do_id)
