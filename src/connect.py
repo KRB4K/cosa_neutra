@@ -14,11 +14,11 @@ async def post(url: str, data: dict, *args, **kwargs):
         response = await client.post(url, json=data, *args, **kwargs)
         return response.json()  
 
-async def send_notification(chat: Chat, message:str):
+async def send_notification(chat_id: str, message:str):
     url = TELEGRAM_API + f'/bot{BOT_TOKEN}/sendMessage'
     # message = urllib.parse.quote_plus(message)
     params = {
-        'chat_id':chat.id,
+        'chat_id':chat_id,
     }
     body = {
         'text':message

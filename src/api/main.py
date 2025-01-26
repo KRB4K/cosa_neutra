@@ -7,11 +7,5 @@ async def load_active_user(update: Update, context: CallbackContext) -> User|Use
     id = update.effective_user.id
     user = User.from_id(id)
     if user and user.role:
-        match user.role:
-            case "neutralizer":
-                user = Neutralizer.from_id(user.id)
-            case "reviewer":
-                user = Reviewer.from_id(user.id)
-            case "hybrid":
-                user = Hybrid.from_id(user.id)
+        user = user.to_role()
     return user

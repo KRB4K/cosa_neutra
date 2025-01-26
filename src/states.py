@@ -11,6 +11,7 @@ class State(Enum):
     LANGUAGE_IS_ASKED = auto()
     MUST_ASK_HAS_TEAM = auto()
     HAS_TEAM_IS_ASKED = auto()
+    IS_REPORTING = auto()
     IN_WHICH_TEAM_IS_ASKED = auto()
     WHICH_ROLE_IS_ASKED = auto()
     HAS_ONGOING_TASK = auto()

@@ -1,7 +1,8 @@
-from operator import ne
+from operator import add
 import re
 import db
 import api.models as models
+from bot.utils import add_lang_to_context
 from locales import translate, get_user_language, TRANSLATIONS, Token
 from telegram.ext import ApplicationBuilder, ContextTypes
 from utils import align_with_even_length
@@ -25,18 +26,43 @@ def compute_leaderboard():
 
     return neutralizers, reviewers
 
+@add_lang_to_context
 async def leaderboard(update, context: ContextTypes.DEFAULT_TYPE):
     neutralizers, reviewers = compute_leaderboard()
 
-    neutralizers = '\n'.join([(align_with_even_length(str(score), name)) for name, score in neutralizers])
-    reviewers = '\n'.join([(align_with_even_length(str(score), name)) for name, score in reviewers])
+    neutralizers = '\n'.join([(align_with_even_length(str(score), name, n=5)) for name, score in neutralizers])
+    reviewers = '\n'.join([(align_with_even_length(str(score), name, n=5)) for name, score in reviewers])
 
-    reply = f'{translate(Token.NEUTRALIZER_ROLE, context)}:\n{neutralizers}\n\n{translate(Token.REVIEWER_ROLE, context)}:\n{reviewers}'
+    neutralizers_reply = f'<b><u>{translate(Token.NEUTRALIZER_ROLE, context)}:</u></b>\n{neutralizers}'
+    reviewers_reply = f'<b><u>{translate(Token.REVIEWER_ROLE, context)}:</u></b>:\n{reviewers}'
+
+    # Team leaderboard
+    teams = db.SYNC.teams.find({'active': True})
+    teams = [models.Team.from_record(team) for team in teams]
+    teams = [{'name': team.name, 'score': team.get_score()} for team in teams]
+    teams = sorted(teams, key=lambda x: x['score'], reverse=True)
+    teams = teams[:10]
+    teams = [(team['name'], team['score']) for team in teams]
+    teams = '\n'.join([(align_with_even_length(str(score), name, n=5)) for name, score in teams])
+
+    team_reply = f'<b><u>{translate(Token.TEAM, context)}:</u></b>\n{teams}'
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text=reply
+        text=neutralizers_reply,
+        parse_mode='HTML'
     )
 
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=reviewers_reply,
+        parse_mode='HTML'
+    )
+
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=team_reply,
+        parse_mode='HTML'
+    )
 
 

@@ -32,16 +32,24 @@ def today():
     """Returns the current date at midnight"""
     return datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
+def yesterday():
+    """Returns the previous day's date at midnight"""
+    return today() - timedelta(1)
+
+def days_to_ms(days: int) -> int:
+    """Converts a day to milliseconds"""
+    return days * 24 * 60 * 60 * 1000
+
 
 def find_streaks(data):
     delta = timedelta(1)
-    data = sorted(data, key=lambda x:x['created_at'])
+    data = sorted(data, key=lambda x:x.created_at)
     if not data:
         return []
     alls = []
     streak = [data[0]]
-    for i, e in enumerate(data[1:], 1):
-        if not (e['created_at'] - delta) == streak[-1]['created_at']:
+    for e in data[1:]:
+        if not (e.created_at - delta) == streak[-1].created_at:
             alls.append(streak)
             streak = []
         streak.append(e)

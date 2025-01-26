@@ -4,12 +4,11 @@ from telegram.ext import ContextTypes
 
 from api.main import load_active_user
 from bot.handlers.fallbacks import default_handler
-from bot.handlers import onboarding, play, tutorial
+from bot.handlers import onboarding, play, tutorial, report
 from bot.utils import get_entities
 from locales import get_user_language, translate, Token
 import replies
-from states import State, get_state
-
+from states import State, get_state, get_current_lang, set_current_lang
 
 
 async def message_handler(
@@ -99,3 +98,6 @@ async def message_handler(
         
         case State.HAS_ONGOING_TASK:
             return await play.register_task(update, context)
+        
+        case State.IS_REPORTING:
+            return await report.register_report(update, context)

@@ -31,6 +31,10 @@ class Token(Enum):
 
     # Menu
     WELCOME = auto()
+    COME_PLAY = auto()
+    WHAT_TO_REPORT = auto()
+    REPORT_REGISTERED = auto()
+    REPORT_IS_MISSING = auto()
 
     # Tutorial
     TUTO_INTRO = auto()
@@ -59,6 +63,8 @@ class Token(Enum):
     REVIEWER_ROLE = auto()
     HYBRID_ROLE = auto()
 
+    TEAM = auto()
+
     # Other tokens
     TODAYS_MWE = auto()
     SUBMIT = auto()
@@ -70,6 +76,8 @@ class Token(Enum):
     UNKNOWN_MESSAGE = auto()
     DEFAULT_GREETING = auto()
     DEFAULT_UNKNOWN = auto()
+    LIMIT_REACHED = auto()
+    ON_STREAK = auto()
 
     ASK_LANGUAGE = auto()
     ASK_IF_IN_TEAM = auto(),
@@ -89,11 +97,12 @@ class Token(Enum):
     NOTHING_TO_DO = auto()
     NEUTRALIZE_THIS = auto()
     REVIEW_THIS = auto()
+    ORIGINAL_SEGMENT = auto()
     SUCCESSFUL_NEW_NEUTRALIZATION = auto()
     SUCCESSFUL_NEW_REVIEW = auto()
     COULD_NOT_SAVE_SUBMISSION = auto()
 
-    LIMIT_REACHED = auto()
+    
 
 
 
@@ -120,6 +129,11 @@ TRANSLATIONS = {
 
 
         Token.WELCOME: 'Welcome!',
+        Token.COME_PLAY: 'Come play!',
+        Token.WHAT_TO_REPORT: 'Copy-paste the part you which to report.',
+        Token.REPORT_REGISTERED: 'Thank you, your report has been registered.',
+        Token.REPORT_IS_MISSING: 'Please provide a report.',
+
         Token.PLAY_BUTTON: 'Play',
         Token.HELP_BUTTON: 'Help',
         Token.END_GAME_BUTTON: 'End Game',
@@ -127,6 +141,7 @@ TRANSLATIONS = {
         Token.NEUTRALIZER_ROLE: 'Neutralizer',
         Token.REVIEWER_ROLE: 'Reviewer',
         Token.HYBRID_ROLE: 'Hybrid',
+        Token.TEAM: 'Team',
         Token.TODAYS_MWE: "Today's MWE",
         Token.SUBMIT: 'Submit',
         Token.REVIEW: 'Review',
@@ -152,12 +167,14 @@ TRANSLATIONS = {
 
         Token.NOTHING_TO_DO: "You have nothing to do at the moment.",
         Token.NEUTRALIZE_THIS: "Please neutralize the following segment. Type a gender-agnostic alternative or copy-paste the original sentence if it's good to go.",
-        Token.REVIEW_THIS: "Please review the following neutralization. Copy and paste in the chat the one you think is the best and send it.",
-        Token.SUCCESSFUL_NEW_NEUTRALIZATION: "Your neutralization has been successfully submitted.",
-        Token.SUCCESSFUL_NEW_REVIEW: "Your review has been successfully submitted.",
+        Token.REVIEW_THIS: "Please review the following neutralizations. Copy and paste in the chat the one you think is the best and send it.",
+        Token.ORIGINAL_SEGMENT: "Here is the original segment:",
+        Token.SUCCESSFUL_NEW_NEUTRALIZATION: "The following neutralization has been successfully submitted: ",
+        Token.SUCCESSFUL_NEW_REVIEW: "The following review has been successfully submitted: ",
         Token.COULD_NOT_SAVE_SUBMISSION: "Your submission encountered an error.",
 
         Token.LIMIT_REACHED: "You have reached the limit of participations for today. You will be able to play again starting midnight. See you tomorrow!",
+        Token.ON_STREAK: "Thank you for your daily commitment! Keep it up!"
     },
     'fr': {
         Token.OK: 'OK',
@@ -179,6 +196,11 @@ TRANSLATIONS = {
         Token.ENGLISH: 'Anglais',
 
         Token.WELCOME: 'Bienvenue !',
+        Token.COME_PLAY: 'Viens jouer!',
+        Token.WHAT_TO_REPORT: 'Copie-colle la partie que tu souhaites signaler.',
+        Token.REPORT_REGISTERED: 'Merci, ton signalement a été enregistré.',
+        Token.REPORT_IS_MISSING: 'Merci de fournir un signalement.',
+
         Token.PLAY_BUTTON: 'Jouer',
         Token.HELP_BUTTON: 'Aide',
         Token.END_GAME_BUTTON: 'Terminer le jeu',
@@ -186,6 +208,7 @@ TRANSLATIONS = {
         Token.NEUTRALIZER_ROLE: 'Neutralisaire',
         Token.REVIEWER_ROLE: 'Révisaire',
         Token.HYBRID_ROLE: 'Hybride',
+        Token.TEAM: 'Équipe',
         Token.TODAYS_MWE: "MWE d'aujourd'hui",
         Token.SUBMIT: 'Soumettre',
         Token.REVIEW: 'Réviser',
@@ -210,12 +233,14 @@ TRANSLATIONS = {
         Token.MAIN_MENU_LEADERBOARD: "/leaderboard pour afficher le classement",
 
         Token.NOTHING_TO_DO: "Tu n'as rien à faire pour le moment.",
-        Token.NEUTRALIZE_THIS:  "Neutralise le segment suivant. Dans le chat, propose une alternative non-genrée ou copie-colle la phrase intiale si elle est déjà neutre.",
-        Token.REVIEW_THIS: "Révise la neutralisation suivante. Copie-colle dans le chat celle que tu penses être la meilleure avant de l'envoyer.",
-        Token.SUCCESSFUL_NEW_NEUTRALIZATION: "Ta neutralisation a été enregistrée avec succès.",
-        Token.SUCCESSFUL_NEW_REVIEW: "Ta révision a été enregistrée avec succès.",
+        Token.NEUTRALIZE_THIS:  "Neutralise le segment suivant. Dans le chat, propose une alternative non-genrée ou copie-colle la phrase initiale si elle est déjà neutre.",
+        Token.REVIEW_THIS: "Révise les neutralisations suivantes. Copie-colle dans le chat celle que tu penses être la meilleure avant de l'envoyer.",
+        Token.ORIGINAL_SEGMENT: "Voici le segment original :",
+        Token.SUCCESSFUL_NEW_NEUTRALIZATION: "La neutralisation suivante a été enregistrée avec succès: ",
+        Token.SUCCESSFUL_NEW_REVIEW: "La révision suivante a été enregistrée avec succès: ",
         Token.COULD_NOT_SAVE_SUBMISSION: "Ton entrée a rencontré une erreur.",
 
-        Token.LIMIT_REACHED: "Tu as atteint la limite de participations pour aujourd'hui. Tu pourras de nouveau jouer à partir de minuit. À demain !"
+        Token.LIMIT_REACHED: "Tu as atteint la limite de participations pour aujourd'hui. Tu pourras de nouveau jouer à partir de minuit. À demain !",
+        Token.ON_STREAK: "Merci pour ta participation quotidienne ! Continue comme ça !"
     }
 }

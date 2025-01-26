@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from dataclasses import fields as list_fields
 from datetime import datetime
@@ -16,7 +17,7 @@ from api.enums import Roles
 import db
 import settings
 from static import DEFAULT_GAME, DEFAULT_WORKING_LANGUAGE
-from utils import only, today, find_streaks
+from utils import only, today, yesterday, days_to_ms, find_streaks
 
 
 T = TypeVar('T', bound='Model')
@@ -127,6 +128,9 @@ class Segment(Model):
     to_neutralize_lang: str
     last_updated: datetime = None
     origin: str
+
+    def get_text_to_neutralize(self) -> str:
+        return getattr(self, self.to_neutralize)
     
 
     @classmethod
@@ -146,8 +150,126 @@ class Segment(Model):
         return {
             'segment': segment_id,
             'task':'neutralization',
-            'data':getattr(segment, segment.to_neutralize)
+            'data':segment.get_text_to_neutralize()
         }
+    
+    
+    def find_winners(self) -> tuple[list[Neutralization], list[Review]]:
+        neutralizations = Neutralization.sx_coll.find({'segment':self.oid})
+        neutralizations = [Neutralization.from_record(n) for n in neutralizations]
+        reviews = Review.sx_coll.find({'segment':self.oid})
+        reviews = [Review.from_record(r) for r in reviews]
+        if not reviews:
+            return None
+
+        neutralizations_lookup = defaultdict(list)
+        for n in neutralizations:
+            neutralizations_lookup[n.text].append(n)
+        
+        reviews_lookup = defaultdict(list)
+        for r in reviews:
+            reviews_lookup[r.text].append(r)
+
+        counts = Counter()
+        for r in reviews:
+            counts[r.text] += 1
+
+        values = counts.values()
+        max_value = max(values)
+        if max_value == 0:
+            return None
+        
+        winners = [k for k, v in counts.items() if v == max_value]
+
+        winning_neutralizations = [neutralizations_lookup[w] for w in winners]
+        winning_neutralizations = [w for sublist in winning_neutralizations for w in sublist]
+
+        winning_reviews = [reviews_lookup[w] for w in winners]
+        winning_reviews = [r for sublist in winning_reviews for r in sublist]
+
+        return winning_neutralizations, winning_reviews
+    
+    def update_winners(self, final: bool = False):
+        neutralizations, reviews = self.find_winners()
+        if not all((neutralizations, reviews)):
+            return
+        
+        coll = db.SYNC.winners
+        record = coll.find_one({'segment':self.oid})
+        if not record:
+            record = {
+                'segment': self.oid,
+                'created_at': datetime.now()
+            }
+            coll.insert_one(record)
+        record['neutralizations'] = [w.user for w in neutralizations]
+        record['reviews'] = [w.user for w in reviews]
+        record['last_check'] = datetime.now()
+        if final:
+            record['closed'] = True
+        
+        coll.update_one({'segment':self.oid}, {'$set':record})
+    
+    @classmethod
+    def update_segment_winners(cls):
+
+        pipeline = [
+            {
+                '$match': {
+                    'created_at': {'$lt': yesterday()}
+                }
+            },
+            {
+                '$group': {
+                    '_id': '$segment',
+                }
+            },
+            {
+                '$lookup': {
+                    'from': db.CollectionName.WINNERS,
+                    'localField': '_id',
+                    'foreignField': 'segment',
+                    'as': 'winners'
+                }
+            },
+            {
+                '$match': {
+                    'winners': {'$exists': False}
+                }
+            }
+        ]
+
+        oids = [s['_id'] for s in cls.sx_coll.aggregate(pipeline)]
+        segments = cls.sx_coll.find({'_id':{'$in':oids}})
+        segments = list(segments)
+        print(f'Updating {len(segments)} segments on pass 1')
+        for segment in segments:
+            segment = cls.from_record(segment)
+            segment.update_winners()
+
+        # Second pass to close the winners
+        pipeline = [
+            {
+                '$match': {
+                    'closed': {'$exists': False},
+                    '$expr': {
+                        '$gt': [
+                            {'$subtract': ['$last_check', '$created_at']},
+                            days_to_ms(days=7)  # 7 days in milliseconds
+                        ]
+                    }
+                }
+            }
+        ]
+
+        segments = db.SYNC.winners.aggregate(pipeline)
+        oids = [s['segment'] for s in segments]
+        segments = cls.sx_coll.find({'_id':{'$in':oids}})
+        segments = list(segments)
+        print(f'Updating {len(segments)} segments on pass 2')
+        for segment in segments:
+            segment = cls.from_record(segment)
+            segment.update_winners(final=True)
 
 
 @dataclass(kw_only=True)
@@ -289,6 +411,15 @@ class Team(Model):
     def get_members(self, game: ObjectId=DEFAULT_GAME) -> list[User]:
         members = db.SYNC.team_members.find({'team':self.oid, 'game':game})
         return [User.from_id(m['player']) for m in members]
+    
+    def get_score(self, game: ObjectId=DEFAULT_GAME) -> dict[str, int]:
+        members = self.get_members(game)
+        members = [m.to_role() for m in members]
+        total = 0
+        for m in members:
+            score = m.get_score()
+            total += sum(score.values())
+        return total
         
 
 @dataclass(kw_only=True)
@@ -367,7 +498,7 @@ class User(Model):
     def get_neutralizations(self, game: ObjectId=DEFAULT_GAME, filters:dict=None) -> list[Neutralization]:
         filters = filters or {}
         filters.update({'user':self.oid})
-        records =  Neutralization.sx_coll.find({'user':self.oid})  # , 'game':game
+        records =  Neutralization.sx_coll.find(filters)  # , 'game':game
         return [Neutralization.from_record(r) for r in records]
     
     def get_reviews(self, game: ObjectId=DEFAULT_GAME, filters:dict=None) -> list[Review]:
@@ -375,6 +506,19 @@ class User(Model):
         filters.update({'user':self.oid})
         records =  Review.sx_coll.find(filters)  # , 'game':game
         return [Review.from_record(r) for r in records]
+    
+    def to_role(self) -> UserWithRole:
+        match self.role:
+            case 'neutralizer':
+                cls = Neutralizer
+            case 'reviewer':
+                cls = Reviewer
+            case 'hybrid':
+                cls = Hybrid
+            case _:
+                raise ValueError("Role not found")
+        return cls.from_oid(self.oid)
+    
     
     
 
@@ -394,21 +538,31 @@ class UserWithRole(User, ABC):
     def get_score(self, *args, **kwargs) -> dict[str, int]:
         raise NotImplementedError()
     
+    @abstractmethod
+    def get_streaks(self, *args, **kwargs) -> list[dict]:
+        raise NotImplementedError()
+    
     @classmethod
     def get_all_active_users(cls) -> list[UserWithRole]:
         records = cls.sx_coll.find({'active':True})
-        users = []
-        for r in records:
-            role = r.get('role')
-            match role:
-                case 'neutralizer':
-                    cls = Neutralizer
-                case 'reviewer':
-                    cls = Reviewer
-                case 'hybrid':
-                    cls = Hybrid
-            users.append(cls.from_record(r))
+        users = [User.from_record(r) for r in records]
+        users = [u.to_role() for u in users]
         return users
+    
+    def is_on_streak(self, n:int = 3) -> bool:
+        streaks = self.get_streaks()
+        if not streaks:
+            return False
+        
+        last = streaks[-1]
+        if len(last) < n:
+            return False
+            
+        last_task = last[-1]
+        if  yesterday() <= last_task['created_at'] < today():
+            return True
+        
+        return False
 
 
 class Neutralizer(UserWithRole):
@@ -428,11 +582,8 @@ class Neutralizer(UserWithRole):
         neutralizations = self.get_neutralizations()
         total += len(neutralizations)
 
-        # streaks = find_streaks(neutralizations)
-        # streaks_3 = [s for s in streaks if s['streak'] == 3]
-        # streaks_4 = [s for s in streaks if s['streak'] == 4]
-        # streak_n = [s for s in streaks if s['streak'] > 4]
-        # total += len(streaks)
+        winners = db.SYNC.winners.count_documents({'neutralizations':self.oid})
+        total += winners * 2
         
         return {'neutralization': total}
     
@@ -458,7 +609,16 @@ class Reviewer(UserWithRole):
         total = 0
         reviews = self.get_reviews()
         total += len(reviews)
+
+        winners = db.SYNC.winners.count_documents({'reviews':self.oid})
+        total += winners * 2
+
         return {'review': total}
+    
+    def get_streaks(self) -> list[dict]:
+        reviews = self.get_reviews()
+        streaks = find_streaks(reviews)
+        return streaks
 
 class Hybrid(UserWithRole):
 
@@ -493,12 +653,36 @@ class Hybrid(UserWithRole):
             available.append('neutralization')
         if reviews < settings.DAILY_REVIEWS:
             available.append('review')
-        print(neutralizations, reviews, settings.DAILY_NEUTRALIZATIONS, settings.DAILY_REVIEWS)
+        print(f'Daily neutralizations: {neutralizations}/{settings.DAILY_NEUTRALIZATIONS}')
+        print(f'Daily reviews: {reviews}/{settings.DAILY_REVIEWS}')
         return available
     
     def get_score(self) -> dict[str, int]:
+        neutralization_total = 0
+        review_total = 0
+
+        neutralizations = self.get_neutralizations()
+        neutralization_total += len(neutralizations)
+
+        reviews = self.get_reviews()
+        review_total += len(reviews)
+
+        neutralization_winners = db.SYNC.winners.count_documents({'neutralizations':self.oid})
+        neutralization_total += neutralization_winners * 2
+
+        review_winners = db.SYNC.winners.count_documents({'reviews':self.oid})
+        review_total += review_winners * 2
+
+        return {
+            'neutralization': neutralization_total,
+            'review': review_total
+        }
+    
+        
+    
+
+    def get_streaks(self) -> list[dict]:
         neutralizations = self.get_neutralizations()
         reviews = self.get_reviews()
-        return {'neutralization': len(neutralizations), 'review': len(reviews)}
-
-    
+        streaks = find_streaks(neutralizations + reviews)
+        return streaks

@@ -18,12 +18,14 @@ class CollectionName(StrEnum):
     GAMES = 'games'
     LANGUAGES = 'languages'
     NEUTRALIZATIONS = 'neutralizations'
+    REPORTS = 'reports'
     REVIEWS = 'reviews'
     ROLES = 'roles'
     SEGMENTS = 'segments'
     TEAMS = 'teams'
     TEAM_MEMBERS = 'team_members'
     USERS = 'users'
+    WINNERS = 'winners'
 
 
 class _Client:
@@ -47,23 +49,27 @@ class SyncClient(_Client):
     games: Collection = CollectionName.GAMES
     languages: Collection = CollectionName.LANGUAGES
     neutralizations: Collection = CollectionName.NEUTRALIZATIONS
+    reports: Collection = CollectionName.REPORTS
     reviews: Collection = CollectionName.REVIEWS
     roles: Collection = CollectionName.ROLES
     segments: Collection = CollectionName.SEGMENTS
     teams: Collection = CollectionName.TEAMS
     team_members: Collection = CollectionName.TEAM_MEMBERS
     users: Collection = CollectionName.USERS
+    winners: Collection = CollectionName.WINNERS
 
 class AsyncClient(_Client):
     games: AsyncCollection = CollectionName.GAMES
     languages: AsyncCollection = CollectionName.LANGUAGES
     neutralizations: AsyncCollection = CollectionName.NEUTRALIZATIONS
+    reports: AsyncCollection = CollectionName.REPORTS
     reviews: AsyncCollection = CollectionName.REVIEWS
     roles: AsyncCollection = CollectionName.ROLES
     segments: AsyncCollection = CollectionName.SEGMENTS
     teams: AsyncCollection = CollectionName.TEAMS
     team_members: AsyncCollection = CollectionName.TEAM_MEMBERS
     users: AsyncCollection = CollectionName.USERS
+    winners: AsyncCollection = CollectionName.WINNERS
 
 
 

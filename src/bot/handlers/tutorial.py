@@ -2,11 +2,14 @@
 from telegram import Update
 from telegram.ext import CallbackContext
 
+from bot.utils import add_lang_to_context
 import keyboards
 from locales import translate, Token
 from states import State, set_state
 import stickers
 
+
+@add_lang_to_context
 async def intro(update: Update, context: CallbackContext):
     reply = translate(Token.TUTO_INTRO, context)
     await context.bot.send_sticker(
