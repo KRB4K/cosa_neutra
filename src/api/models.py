@@ -655,6 +655,7 @@ class Hybrid(UserWithRole):
             available.append('review')
         print(f'Daily neutralizations: {neutralizations}/{settings.DAILY_NEUTRALIZATIONS}')
         print(f'Daily reviews: {reviews}/{settings.DAILY_REVIEWS}')
+        print("Available tasks:", available)
         return available
     
     def get_score(self) -> dict[str, int]:
