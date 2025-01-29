@@ -573,7 +573,7 @@ class Neutralizer(UserWithRole):
     def get_available_task_type(self) -> list[str]:
         filters = {'created_at':today()}
         print(self.get_neutralizations(filters=filters), settings.DAILY_NEUTRALIZATIONS)
-        if len(self.get_neutralizations(filters=filters)) >= settings.DAILY_NEUTRALIZATIONS:
+        if len(self.get_neutralizations(filters=filters)) < settings.DAILY_NEUTRALIZATIONS:
             return ['neutralization']
         return []
     
@@ -601,7 +601,7 @@ class Reviewer(UserWithRole):
     def get_available_task_type(self) -> list[str]:
         filters = {'created_at':today()}
         print(self.get_reviews(filters=filters), settings.DAILY_REVIEWS)
-        if len(self.get_reviews(filters=filters)) >= settings.DAILY_REVIEWS:
+        if len(self.get_reviews(filters=filters)) < settings.DAILY_REVIEWS:
             return ['review']
         return []
     
