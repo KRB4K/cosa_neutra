@@ -627,6 +627,7 @@ class Hybrid(UserWithRole):
         only = only or ['neutralization', 'review']
         if not only:
             raise ValueError('You must specify the type of task to do')
+        print('Only', only)
 
         choices = []
         for task in only:
@@ -634,6 +635,7 @@ class Hybrid(UserWithRole):
                 choices.append(Segment)
             elif task == 'review':
                 choices.append(Neutralization)
+        print('Choices', choices)
 
         cls = random.choice(choices)
         item = cls.pick_next_for(self)
