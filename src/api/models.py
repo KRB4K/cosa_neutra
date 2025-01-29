@@ -643,6 +643,8 @@ class Hybrid(UserWithRole):
             return item
         else:
             other_cls = Neutralization if cls == Segment else Segment
+            if other_cls not in choices:
+                return {'data':None}
             item = other_cls.pick_next_for(self)
             return item
 
