@@ -6,6 +6,7 @@ from telegram.ext import ContextTypes
 from api.main import load_active_user
 from api import models
 import db
+from keyboards import working_languages
 from static import DEFAULT_GAME
 from states import get_current_lang, set_current_lang
 
@@ -29,6 +30,7 @@ def add_lang_to_context(function):
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not get_current_lang(context):
             user = await load_active_user(update, context)
-            set_current_lang(context, user.working_language)
+            working_language = user.working_language if user else "en"
+            set_current_lang(context, working_language)
         return await function(update, context)
     return wrapper
